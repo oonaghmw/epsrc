@@ -2,8 +2,8 @@ import r2, nd, random
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
-#from deap import base, creator, tools #import warning??
-
+from dtlz import DTLZ1, DTLZ2
+from scipy.optimize import minimize
 """
 PSEUDOCODE
 
@@ -18,24 +18,8 @@ while not converged:
 	if r2(A.append(a'), W, z) < r2(A, W, z):
 		A = A.append(a')
 	A <- nondom(A)
-		
-WRITE NONDOM(A) 
-"""
-
-"""
-!!! Multiple versions in different modules - fix !!!
-Generate a weights vector as a list with k weight tuples.
-the weights in each tuple add to 1. Currently only 2 dimensions.
-Args:
-	k 	- the number of tuples of weights in the vector. Must be 
-		  greater than 1. 
-Returns:
-	list with k elements. Each element is a tuple of length 2
-	with positive float elements adding to 1. 
-"""
-def weights_gen( k ) :
-	return [ ( i/( k - 1 ), 1-i/( k-1 ) ) for i in range( k ) ]
-
+""" 
+	
 """
 To be called by mutate function. Randomly mutates a number x by 
 adding a random number chosen from the range (-1, 1). The value
@@ -54,8 +38,9 @@ Returns:
 def mutate_aux( x, rate ):
 	if random.random() < rate:
 		while True:
-			x += random.choice( ( -1, 1 ) )*random.random()
-			if x > 0:
+			x_ = np.random.normal(x, 0.25)
+			if x_ > 0 and x_ < 1:
+				x = x_
 				break
 	return x
 	
@@ -75,27 +60,33 @@ Returns:
 def mutate( a, rate ):
 	return tuple( map( lambda x: mutate_aux( x, rate ), a ) )
 	
-
 """
-!!! COPY+PASTED FROM r2_tester !!!
-Generate a pareto front. Points lie on the line x**p + y**p = 1.
-Smaller values of p make a better pareto front.
+Performs the non-dom operation on a dictionary given that the points
+for which the non dominated front must be found are given by the keys
+of the dictionary.
 Args:
-	p 	 - number value greater than 0. 	
-	step - number of points on the front. Cannot be negative.
+	dict	- a dictionary where the keys are tuples of consistent 
+			  length representing points in objective space. The
+			  values are the associated points in decision space.
 Returns:
-	List of the coordinates as a tuple of the points generated.
+	dictionary with the items with keys as dominated points removed.
 """
-def generate_pareto( p, step ):
-	# guard statements - avoid p =< 0 ?
-	x1 = np.linspace( 0, 1, step )
-	x2 = ( 1 - x1**p ) ** ( 1/p )
-	return list( zip( x1, x2 ) )
+def dict_nondom(dict):
+	A   = list((dict.keys()))
+	ndom = nd.nondom( np.array( A) ) 
+	A  = [ A[ j ] for j in ndom ]
+	
+	for k in dict.copy():
+		if k not in A:
+			del dict[k] #unsafe?
+	return dict
+	
 	
 """
 Evolutionary algorithm which, given an initial Pareto front, uses the R2 indicator 
 defined in the r2 module to evolve a better performing front, aiming to minimise the 
-value given by the R2 indicator. Utilised nondom function.
+value given by the R2 indicator. Utilised nondom function. Shows graph of the 
+value of R2 for each generation.
 Args:
 	A 	 - initial Pareto front of non dominated points, a list of tuples giving the coordinates.
 	W 	 - weight vector required for R2. A list of tuples.
@@ -104,146 +95,154 @@ Args:
 	gens - number of iterations to run algorithm for.
 Returna:
 	A 	 - resulting Pareto front, list of tuples 
-	r	 - value of r2 for the resulting Pareto front !!!! NOT NECESSARY??
+	r	 - value of r2 for the resulting Pareto front
 	As	 - list of each unique iteration of the Pareto front generated
 """
-def evo( A, W, z, rate, gens ):
-	As = [ A ]
+def evo( X, f, W, z, rate, gens ):
+	dict = { f(x): x for x in X }
+	dict = dict_nondom(dict)
+	
+	r   = r2.r2( dict.keys(), W, z )
+	r2s = [(0, r)]
+	
 	for i in range( gens ):
-		r    = r2.r2( A, W, z )
-		a    = random.choice( A ) #random or ordered?
-		a_   = mutate( a, rate )
-		A2   = A + [ a_ ]
-		ndom = nd.nondom( np.array( A2 ) ) #make np in first place?
-		A2   = [ A2[ x ] for x in ndom ]
-		r_   = r2.r2( A2, W, z ) 
-		if r_ < r: 
-			A = A2
-			r = r_
-			As.append( A )
+		a = random.choice( list(dict.keys()) ) 
+		x = dict[a]
+		x = mutate( x, rate ) 
+		#a2 = f(x)
+		a2 = f(np.array(x))
+		a2 = tuple(a2)
 		
-	return A, r, As
-	
-	
-"""
-Graph each unique version of the Pareto front given by the evolutionary algorithm on the same axis.
-Args: 
-	A	 - Initial Pareto front. List of tuples where tuple is the coordinates of a point.
-	W 	 - weight vector required for R2. A list of tuples. ??????????????????????????????????????????
-	z 	 - utopian point, tuple giving coordinates.
-	rate - number giving rate of mutation
-	gens - number of iterations to run algorithm for.
-Returns: 
-	none
-"""
-def pareto_evo( A, W, z = ( 0, 0 ), rate = 0.5, gens = 10 ):
-	e, r, As = evo( A, W, z, rate, gens )
-	
-	for i in range( len( As ) ):
-		A_ = sorted( As[ i ] )
-		plt.plot( list( zip(* A_ ) )[0], list( zip(* A_ ) )[ 1 ] , alpha = 0.7, lw = 1 )
-		plt.scatter( list( zip(* A_ ) )[0], list( zip(* A_ ) )[ 1 ] , alpha = 0.7, label = i+1 )
+		
+		dict[a2] = x
+		dict = dict_nondom(dict)
+		
+		r    = r2.r2( dict.keys(), W, z ) 
+		
+		r2s.append((i+1, r))
 			
-	plt.title("Evolution of Pareto front, {} iterations".format( gens ) )
-	plt.xlabel( "f1(x)" )
-	plt.ylabel( "f2(x)" )
-	#plt.grid( True )
-	plt.legend( title = "Generation", ncol = 2 ) #generation may be misleading since many more generations are not represented
-	plt.show()
+	plt.plot(list(zip(*r2s))[0], list(zip(*r2s))[1])
+	plt.title("R2 value of front over generations")
+	plt.xlabel("generation")
+	plt.ylabel("R2 value")
+	plt.show()		
+	return dict, r
 	
-def r2_evo( A, W, z = ( 0, 0 ), rate = 0.5, gens = 10 ):
-	r2s = [[0, r2.r2( A, W, z )]]
-	for i in range( gens ):
-		r    = r2.r2( A, W, z )
-		a    = random.choice( A ) #random or ordered?
-		a_   = mutate( a, rate )
-		A2   = A + [ a_ ]
-		ndom = nd.nondom( np.array( A2 ) ) #make np in first place?
-		A2   = [ A2[ x ] for x in ndom ]
-		r_   = r2.r2( A2, W, z ) 
-		if r_ < r: 
-			A = A2
-			r = r_
-			r2s.append([i+1, r])
-	plt.scatter(list(zip(*r2s))[0], list(zip(*r2s))[1])
-	plt.plot(list(zip(*r2s))[0], list(zip(*r2s))[1], lw = 1)
-		
-	plt.title("Evolution of R2 Value, {} iterations".format( gens ) )
-	plt.xlabel( "Iteration" )
-	plt.ylabel( "R2" )
-	#plt.grid( True )
-	plt.show()
 	
-def av_over_rate( A, W, z = ( 0, 0 ), gens = 10 ):
-	av_r2s = []
-	for i in np.arange(0, 1.1, 0.1):
-		r2s = []
-		for j in range(50):
-			_, r, _ = evo( A, W, z, i, gens )
-			r2s.append(r)
-		av_r2s.append([i, np.mean(r2s)])
-		
-	plt.plot(list(zip(*av_r2s))[0], list(zip(*av_r2s))[1]) 
-	plt.title("Average R2 over Mutation Rate")
-	plt.xlabel("Mutation rate")
-	plt.ylabel("Av. R2")
-	plt.show()
-	return av_r2s
 	
-def av_over_points( p, W, z = ( 0, 0 ), gens = 10 ):
-	av_r2s = []
-	for i in range(1, 10):
-		A = generate_pareto(p, i)
-		r2s = []
-		for j in range(50):
-			_, r, _ = evo( A, W, z, i, gens )
-			r2s.append(r)
-		av_r2s.append([i, np.mean(r2s)])
-		
-	plt.plot(list(zip(*av_r2s))[0], list(zip(*av_r2s))[1]) 
-	plt.title("Average R2 over Initial no. Points")
-	plt.xlabel("No. points")
-	plt.ylabel("Av. R2")
-	plt.show()
-	return av_r2s
 	
-def av_over_weights( A, z = ( 0, 0 ), gens = 10 ):
-	av_r2s = []
-	for i in range(3, 11):
-		W = weights_gen(i)
-		r2s = []
-		for j in range(50):
-			_, r, _ = evo( A, W, z, i, gens )
-			r2s.append(r)
-		av_r2s.append([i, np.mean(r2s)])
-		
-	plt.plot(list(zip(*av_r2s))[0], list(zip(*av_r2s))[1]) 
-	plt.title("Average R2 over no. weights")
-	plt.xlabel("no. weights") ##### edit
-	plt.ylabel("Av. R2")
-	plt.show()
-	return av_r2s
+"""
+Adaptation of method from the dtlz module to make more usable in 
+EA. Uses tuple as argument for test function DTLZ2 with 2 objectives.
+Args:
+	- 	tuple representing point in decision space
+Returns:
+	- 	2D tuple representing point transformed in objective space 
+		by DTZL2
+"""
+def dtlz2_mod2(tup):
+	dtlz2 = DTLZ2(M=2) 
+	return tuple(dtlz2.evaluate(np.array(tup)))
 	
+"""
+Adaptation of method from the dtlz module to make more usable in 
+EA. Uses tuple as argument for test function DTLZ1 with 2 objectives.
+Args:
+	- 	tuple representing point in decision space
+Returns:
+	- 	2D tuple representing point transformed in objective space 
+		by DTZL1
+"""	
+def dtlz1_mod2(tup):
+	dtlz1 = DTLZ1(M=2) 
+	return tuple(dtlz1.evaluate(np.array(tup)))
+
+"""
+Adaptation of method from the dtlz module to make more usable in 
+EA. Uses tuple as argument for test function DTLZ2 with 3 objectives.
+Args:
+	- 	tuple representing point in decision space
+Returns:
+	- 	3D tuple representing point transformed in objective space 
+		by DTZL2
+"""	
+def dtlz2_mod3(tup):
+	dtlz2 = DTLZ2(M=3) 
+	return tuple(dtlz2.evaluate(np.array(tup)))
+	
+
+"""
+Adaptation of method from the dtlz module to make more usable in 
+EA. Uses tuple as argument for test function DTLZ1 with 3 objectives.
+Args:
+	- 	tuple representing point in decision space
+Returns:
+	- 	3D tuple representing point transformed in objective space 
+		by DTZL1
+"""	
+def dtlz1_mod3(tup):
+	dtlz1 = DTLZ1(M=3) 
+	return tuple(dtlz1.evaluate(np.array(tup)))
+	
+#################	
+
+"""
+Gives a coord point for 2D DTZL1.
+Args: 
+	-	number x 
+Returns:
+	- 	associated coordinate for x given DTZL1 as a tuple
+"""
+def dtlz1_front(x):
+	return (x, 0.5-x)
+
+"""
+Gives a coord point for 2D DTZL2.
+Args: 
+	-	number x 
+Returns:
+	- 	associated coordinate for x given DTZL2 as a tuple
+"""	
+def dtlz2_front(x): 
+	return (x, (1-x**2)**(1/2))
+	
+"""
+Function to approximate R2 distance between the plot of a function 
+and a given point. Models plot of function for x values [0, 1].
+Args:
+	-	function to model and find distance to point
+	- 	a point as a tuple of numbers.
+Returns:
+	-	numerical value giving approximate R2 distance between
+		point and plot of function in interval [0, 1].
+"""
+def curve_distance(f, point):
+	front = list(map(f, np.arange(0, 1.01, 0.01)))
+	return r2.r2(front, W, point)
+	
+"""
+Finds the average distance given by curve_distance between the
+plot of the fiven function and the list of points.
+Args: 
+	-	function to model and find distance to points
+	- 	list of points as tuples of numbers.
+Returns:
+	-	numerical value giving av. approximate R2 distance between
+		points and plot of function in interval [0, 1].
+"""
+def curve_evaluate(f, points):
+	r2s = 0
+	for p in points:
+		r2s += curve_distance(f, p)
+	
+	return r2s/len(points)
+
 	
 if __name__ == "__main__": 
-	A = generate_pareto(1, 4)
-	W = weights_gen(3)
-	z = (0, 0)
-	pareto_evo(A, W, z, 0.7, 500)
-	
-	r2_evo(A, W, z, 0.7, 500)
 
-	#3d version 
-	"""
-	A = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (0.33, 0.33, 0.33)]
-	W = r2.dir_gen( 3 ) #the weight changes - try to fix
-	z = ( 0, 0, 0)
-	print(r2.r2(A, W, z))
-	A2, R2, As = evo(A, W, z, 0.5, 50)
-	print(As)
+	X = [tuple(np.random.rand(3)) for j in range(15)]
 	
-	#fig = plt.figure()
-	#ax = fig.add_subplot(111, projection='3d')
-	#ax.scatter(list(zip(*As))[0], list(zip(*As))[1], list(zip(*)
-	#plt.show()
-	"""
+	W = r2.dir_gen(200)
+	d, r = evo(X, dtlz2_mod21, W, (0, 0, 0), 0.7, 100)
+	
+	
