@@ -85,7 +85,7 @@ def dict_nondom(dict):
 """
 Evolutionary algorithm which, given an initial Pareto front, uses the R2 indicator 
 defined in the r2 module to evolve a better performing front, aiming to minimise the 
-value given by the R2 indicator. Utilised nondom function. Shows graph of the 
+value given by the R2 indicator. Utilises nondom function. Shows graph of the 
 value of R2 for each generation.
 Args:
 	A 	 - initial Pareto front of non dominated points, a list of tuples giving the coordinates.
@@ -94,9 +94,10 @@ Args:
 	rate - number giving rate of mutation
 	gens - number of iterations to run algorithm for.
 Returna:
-	A 	 - resulting Pareto front, list of tuples 
+	dict - resulting Pareto front, dictionary with keys as points in the 
+		   objective space, and values as their equivalent points in 
+		   decision space. 
 	r	 - value of r2 for the resulting Pareto front
-	As	 - list of each unique iteration of the Pareto front generated
 """
 def evo( X, f, W, z, rate, gens ):
 	dict = { f(x): x for x in X }
