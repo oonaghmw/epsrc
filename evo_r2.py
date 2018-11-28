@@ -22,18 +22,19 @@ while not converged:
 WRITE NONDOM(A) 
 """
 
-"""
-!!! Multiple versions in different modules - fix !!!
-Generate a weights vector as a list with k weight tuples.
-the weights in each tuple add to 1. Currently only 2 dimensions.
-Args:
-	k 	- the number of tuples of weights in the vector. Must be 
-		  greater than 1. 
-Returns:
-	list with k elements. Each element is a tuple of length 2
-	with positive float elements adding to 1. 
-"""
+
 def weights_gen( k ) :
+	"""
+	!!! Multiple versions in different modules - fix !!!
+	Generate a weights vector as a list with k weight tuples.
+	the weights in each tuple add to 1. Currently only 2 dimensions.
+	Args:
+		k 	- the number of tuples of weights in the vector. Must be 
+			greater than 1. 
+	Returns:
+		list with k elements. Each element is a tuple of length 2
+		with positive float elements adding to 1. 
+	"""
 	return [ ( i/( k - 1 ), 1-i/( k-1 ) ) for i in range( k ) ]
 	
 def f1(x):
@@ -44,22 +45,23 @@ def f2(x):
 	
 def f(x):
 	return (f1(x), f2(x))
-"""
-To be called by mutate function. Randomly mutates a number x by 
-adding a random number chosen from the range (-1, 1). The value
-of the mutated number is greater than 0. Mutation occurs
-with a probability given by the rate.
-Warning: It is possible for return values to be negative if a 
-negative number is passed in and not mutated.
-Args:
-	x	 - Number to be perturbed
-	rate - Probability of mutation, effectively in the range [0, 1]
-		   (Values outside of this range will work but are redundant)
-Returns:
-	x, the new mutated value derived from x. Either a value greater 
-	than 0 or the original value of x.
-"""	
+
 def mutate_aux( x, rate ):
+	"""
+	To be called by mutate function. Randomly mutates a number x by 
+	adding a random number chosen from the range (-1, 1). The value
+	of the mutated number is greater than 0. Mutation occurs
+	with a probability given by the rate.
+	Warning: It is possible for return values to be negative if a 
+	negative number is passed in and not mutated.
+	Args:
+		x	 - Number to be perturbed
+		rate - Probability of mutation, effectively in the range [0, 1]
+			(Values outside of this range will work but are redundant)
+	Returns:
+		x, the new mutated value derived from x. Either a value greater 
+		than 0 or the original value of x.
+	"""	
 	if random.random() < rate:
 		while True:
 			x += random.choice( ( -1, 1 ) )*random.random()
@@ -67,20 +69,21 @@ def mutate_aux( x, rate ):
 				break
 	return x
 	
-"""
-Randomly mutates a tuple of numbers.
-Uses mutate_aux on each element to derive its new value.
-Warning: It is possible for values in returned tuple to be negative if
-tuple with negative values is passed in and not mutated.
-Args: 
-	a	 - tuple of numbers 
-	rate - float giving the probability that each element is mutated, 
-		  effectively in range [0, 1]
-Returns:
-	the mutated tuple. Values are either greater than 0 or the original 
-	values passed in.
-"""
+
 def mutate( a, rate ):
+	"""
+	Randomly mutates a tuple of numbers.
+	Uses mutate_aux on each element to derive its new value.
+	Warning: It is possible for values in returned tuple to be negative if
+	tuple with negative values is passed in and not mutated.
+	Args: 
+		a	 - tuple of numbers 
+		rate - float giving the probability that each element is mutated, 
+			effectively in range [0, 1]
+	Returns:
+		the mutated tuple. Values are either greater than 0 or the original 
+		values passed in.
+	"""
 	return tuple( map( lambda x: mutate_aux( x, rate ), a ) )
 	
 def dict_nondom(dict):
@@ -93,24 +96,24 @@ def dict_nondom(dict):
 			del dict[k] #unsafe?
 	return dict
 	
-	
-"""
-IN PROCESS OF BEING ALTERED
-Evolutionary algorithm which, given an initial Pareto front, uses the R2 indicator 
-defined in the r2 module to evolve a better performing front, aiming to minimise the 
-value given by the R2 indicator. Utilised nondom function.
-Args:
-	A 	 - initial Pareto front of non dominated points, a list of tuples giving the coordinates.
-	W 	 - weight vector required for R2. A list of tuples.
-	z 	 - utopian point, tuple giving coordinates.
-	rate - number giving rate of mutation
-	gens - number of iterations to run algorithm for.
-Returna:
-	A 	 - resulting Pareto front, list of tuples 
-	r	 - value of r2 for the resulting Pareto front
-	As	 - list of each unique iteration of the Pareto front generated
-"""
+
 def evo( X, f, W, z, rate, gens ):
+	"""
+	IN PROCESS OF BEING ALTERED
+	Evolutionary algorithm which, given an initial Pareto front, uses the R2 indicator 
+	defined in the r2 module to evolve a better performing front, aiming to minimise the 
+	value given by the R2 indicator. Utilised nondom function.
+	Args:
+		A 	 - initial Pareto front of non dominated points, a list of tuples giving the coordinates.
+		W 	 - weight vector required for R2. A list of tuples.
+		z 	 - utopian point, tuple giving coordinates.
+		rate - number giving rate of mutation
+		gens - number of iterations to run algorithm for.
+	Returna:
+		A 	 - resulting Pareto front, list of tuples 
+		r	 - value of r2 for the resulting Pareto front
+		As	 - list of each unique iteration of the Pareto front generated
+	"""
 	dict = { f(x): x for x in X}
 	print('dict:', dict, '\n')
 	dict = dict_nondom(dict)

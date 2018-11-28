@@ -6,24 +6,24 @@ Run tests and graph results for the r2 function in
 the r2 module
 """
 
-"""
-Generate a weights vector as a list with k weight tuples.
-the weights in each tuple add to 1. Currently only 2 dimensions.
-Args:
-	k 	- the number of tuples of weights in the vector. Must be 
-		  greater than 1. 
-Returns:
-	list with k elements. Each element is a tuple of length 2
-	with positive float elements adding to 1. 
-"""
 def weights_gen( k ) :
+	"""
+	Generate a weights vector as a list with k weight tuples.
+	the weights in each tuple add to 1. Currently only 2 dimensions.
+	Args:
+		k 	- the number of tuples of weights in the vector. Must be 
+			greater than 1. 
+	Returns:
+		list with k elements. Each element is a tuple of length 2
+		with positive float elements adding to 1. 
+	"""
 	return [ ( i/( k - 1 ), 1-i/( k-1 ) ) for i in range( k ) ]
 	
 ### TWO DIMENSIONAL ###
-"""
-add args to make customisable
-"""
 def generate_pareto( p, step ):
+	"""
+	add args to make customisable
+	"""
 	x1 = np.linspace( 0, 1, step )
 	x2 = ( 1 - x1**p ) ** ( 1/p )
 	return list( zip( x1, x2 ) )
@@ -92,10 +92,10 @@ def test_weights():
 	plt.ylabel( "r2" )
 	plt.show()
 	
-"""
-pointless, mostly just linear, stays the same for different w
-"""
 def test_w(): 
+	"""
+	pointless, mostly just linear, stays the same for different w
+	"""
 	A = generate_pareto(4, 10)		
 	r2s = []
 	

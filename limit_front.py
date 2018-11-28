@@ -5,23 +5,23 @@ import r2_evo as r2e
 import random
 import time 
 
-"""
-Iteratively calculates point in front which removing will contribute 
-least to the R2 value of the front, then removes it. This is done until
-desired number of points are removed from front.
-Quite a slow process but generally results in better front than 
-remove_many_one.
-Args: 
-	front	- list of tuples representing the coordinates for a NON DOMINATED front
-	W		- List of weight vectors as tuples to calculate R2 with
-	z		- tuple representing utopian point to calculate R2 with
-	N		- number of points to remove. 
-Returns:
-	list of tuples representing points remaining in the truncated front.
-Warnings:
-	Most effective when front is already non dominated.
-"""	
 def remove_many_it(front, W, z, N=1):
+	"""
+	Iteratively calculates point in front which removing will contribute 
+	least to the R2 value of the front, then removes it. This is done until
+	desired number of points are removed from front.
+	Quite a slow process but generally results in better front than 
+	remove_many_one.
+	Args: 
+		front	- list of tuples representing the coordinates for a NON DOMINATED front
+		W		- List of weight vectors as tuples to calculate R2 with
+		z		- tuple representing utopian point to calculate R2 with
+		N		- number of points to remove. 
+	Returns:
+		list of tuples representing points remaining in the truncated front.
+	Warnings:
+		Most effective when front is already non dominated.
+	"""	
 	if len(front) <= N:
 		raise ValueError("Trying to remove more points than are available")
 	for _ in range(N):
@@ -39,23 +39,23 @@ def remove_many_it(front, W, z, N=1):
 		front.remove(min(contribs, key=contribs.get))
 	return front
 
-"""
-Calculates points in front which removing will contribute 
-least to the R2 value of the front, orders them with increasing
-contribution then removes N of the first points in the order in one go.
-Faster algorithm than remove_many_it but generally results in front
-with worse R2 value. 
-Args: 
-	front	- list of tuples representing the coordinates for a NON DOMINATED front
-	W		- list of weight vectors as tuples to calculate R2 with
-	z		- tuple representing utopian point to calculate R2 with
-	N		- number of points to remove. 
-Returns:
-	list of tuples representing points remaining in the truncated front.
-Warnings:
-	Most effective when front is already non dominated.
-"""	
 def remove_many_one(front, W, z, N=1):
+	"""
+	Calculates points in front which removing will contribute 
+	least to the R2 value of the front, orders them with increasing
+	contribution then removes N of the first points in the order in one go.
+	Faster algorithm than remove_many_it but generally results in front
+	with worse R2 value. 
+	Args: 
+		front	- list of tuples representing the coordinates for a NON DOMINATED front
+		W		- list of weight vectors as tuples to calculate R2 with
+		z		- tuple representing utopian point to calculate R2 with
+		N		- number of points to remove. 
+	Returns:
+		list of tuples representing points remaining in the truncated front.
+	Warnings:
+		Most effective when front is already non dominated.
+	"""	
 	if len(front) <= N:
 		raise ValueError("Trying to remove more points than are available")
 
@@ -76,20 +76,20 @@ def remove_many_one(front, W, z, N=1):
 		front.remove(sorted_keys[i])
 	return front
 
-"""
-Equivalent behaviour to remove_many_it but displays graphs of the 
-progress of the front. 
-Args: 
-	front	- list of tuples representing the coordinates for a NON DOMINATED front
-	W		- list of weight vectors as tuples to calculate R2 with
-	z		- tuple representing utopian point to calculate R2 with
-	N		- number of points to remove. 
-Returns:
-	list of tuples representing points remaining in the truncated front.
-Warnings:
-	Most effective when front is already non dominated.
-"""
 def remove_many_graphic(front, W, z, N=1):
+	"""
+	Equivalent behaviour to remove_many_it but displays graphs of the 
+	progress of the front. 
+	Args: 
+		front	- list of tuples representing the coordinates for a NON DOMINATED front
+		W		- list of weight vectors as tuples to calculate R2 with
+		z		- tuple representing utopian point to calculate R2 with
+		N		- number of points to remove. 
+	Returns:
+		list of tuples representing points remaining in the truncated front.
+	Warnings:
+		Most effective when front is already non dominated.
+	"""
 	if len(front) <= N:
 		raise ValueError("Trying to remove more points than are available")
 	for _ in range(N):
@@ -117,26 +117,25 @@ def remove_many_graphic(front, W, z, N=1):
 		front.remove(min(contribs, key=contribs.get))
 	return front
 	
-	
-"""
-Evolutionary algorithm which, given an initial Pareto front, uses the R2 indicator 
-defined in the r2 module to evolve a better performing front, ensuring the number of
-points in the front is never above a given value. Utilises nondom function from nd and 
-mutate function from r2_evo. 
-Args:
-	X 	 - initial set of points, a list of tuples giving the coordinates.
-	W 	 - weight vector required for R2. A list of tuples.
-	z 	 - utopian point, tuple giving coordinates.
-	rate - number giving rate of mutation
-	gens - number of iterations to run algorithm for.
-	size - maximum size for list of points in the front.
-Returna:
-	dict - resulting Pareto front, dictionary with keys as points in the 
-		   objective space, and values as their equivalent points in 
-		   decision space. 
-	r	 - value of r2 for the resulting Pareto front
-"""
 def trunc_evo( X, f, W, z, rate, gens, size):
+	"""
+	Evolutionary algorithm which, given an initial Pareto front, uses the R2 indicator 
+	defined in the r2 module to evolve a better performing front, ensuring the number of
+	points in the front is never above a given value. Utilises nondom function from nd and 
+	mutate function from r2_evo. 
+	Args:
+		X 	 - initial set of points, a list of tuples giving the coordinates.
+		W 	 - weight vector required for R2. A list of tuples.
+		z 	 - utopian point, tuple giving coordinates.
+		rate - number giving rate of mutation
+		gens - number of iterations to run algorithm for.
+		size - maximum size for list of points in the front.
+	Returna:
+		dict - resulting Pareto front, dictionary with keys as points in the 
+			objective space, and values as their equivalent points in 
+			decision space. 
+		r	 - value of r2 for the resulting Pareto front
+	"""
 	dict = { f(x): x for x in X }
 	dict = r2e.dict_nondom(dict)
 
@@ -164,23 +163,22 @@ def trunc_evo( X, f, W, z, rate, gens, size):
 
 	return dict, r
 
-	
-"""
-Same behaviour as trunc_evo, but displays plot of progress of R2 value.
-Args:
-	X 	 - initial set of points, a list of tuples giving the coordinates.
-	W 	 - weight vector required for R2. A list of tuples.
-	z 	 - utopian point, tuple giving coordinates.
-	rate - number giving rate of mutation
-	gens - number of iterations to run algorithm for.
-	size - maximum size for list of points in the front.
-Returns:
-	dict - resulting Pareto front, dictionary with keys as points in the 
-		   objective space, and values as their equivalent points in 
-		   decision space. 
-	r	 - value of r2 for the resulting Pareto front
-"""
-def trunc_evo_graphic( X, f, W, z, rate, gens, size):
+def trunc_evo_graphic( X, f, W, z, rate, gens, size):		
+	"""
+	Same behaviour as trunc_evo, but displays plot of progress of R2 value.
+	Args:
+		X 	 - initial set of points, a list of tuples giving the coordinates.
+		W 	 - weight vector required for R2. A list of tuples.
+		z 	 - utopian point, tuple giving coordinates.
+		rate - number giving rate of mutation
+		gens - number of iterations to run algorithm for.
+		size - maximum size for list of points in the front.
+	Returns:
+		dict - resulting Pareto front, dictionary with keys as points in the 
+			objective space, and values as their equivalent points in 
+			decision space. 
+		r	 - value of r2 for the resulting Pareto front
+	"""
 	dict = { f(x): x for x in X }
 	dict = r2e.dict_nondom(dict)
 	plt.scatter(list(zip(*dict))[0], list(zip(*dict))[1])
@@ -217,23 +215,24 @@ def trunc_evo_graphic( X, f, W, z, rate, gens, size):
 	plt.show()
 	return dict, r
 
-"""
-Similar to trunc_evo, but chooses random points to remove. Written to compare outcomes.
-Does not converge to a low R2 value and R2 is liable to increase.
-Args:
-	X 	 - initial set of points, a list of tuples giving the coordinates.
-	W 	 - weight vector required for R2. A list of tuples.
-	z 	 - utopian point, tuple giving coordinates.
-	rate - number giving rate of mutation
-	gens - number of iterations to run algorithm for.
-	size - maximum size for list of points in the front.
-Returns:
-	dict - resulting Pareto front, dictionary with keys as points in the 
-		   objective space, and values as their equivalent points in 
-		   decision space. 
-	r	 - value of r2 for the resulting Pareto front
-"""
+
 def trunc_evo_rand( X, f, W, z, rate, gens, size):
+	"""
+	Similar to trunc_evo, but chooses random points to remove. Written to compare outcomes.
+	Does not converge to a low R2 value and R2 is liable to increase.
+	Args:
+		X 	 - initial set of points, a list of tuples giving the coordinates.
+		W 	 - weight vector required for R2. A list of tuples.
+		z 	 - utopian point, tuple giving coordinates.
+		rate - number giving rate of mutation
+		gens - number of iterations to run algorithm for.
+		size - maximum size for list of points in the front.
+	Returns:
+		dict - resulting Pareto front, dictionary with keys as points in the 
+			objective space, and values as their equivalent points in 
+			decision space. 
+		r	 - value of r2 for the resulting Pareto front
+	"""
 	dict = { f(x): x for x in X }
 	dict = r2e.dict_nondom(dict)
 	plt.scatter(list(zip(*dict))[0], list(zip(*dict))[1])
@@ -244,8 +243,6 @@ def trunc_evo_rand( X, f, W, z, rate, gens, size):
 			dict.pop(random.choice(list(dict.keys())))
 		plt.scatter(list(zip(*dict))[0], list(zip(*dict))[1])
 		plt.show()
-
-
 
 	r   = r2.r2( dict.keys(), W, z )
 	r2s = [(0, r)]

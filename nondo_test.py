@@ -14,11 +14,11 @@ nd_X = [X[i] for i in nd.nondom(np.array(X))]
 plt.scatter(list(zip(*nd_X))[0], list(zip(*nd_X))[1], c='r')
 plt.show()
 
-"""
-check that point is not dominated by ANY p in set.
-If point is dominated by any p in set then return False.
-"""
 def check_nondom(point, set):
+	"""
+	check that point is not dominated by ANY p in set.
+	If point is dominated by any p in set then return False.
+	"""
 	for p in set:
 		if all([i == j for i, j in zip(point, p)]) == True:
 			pass
